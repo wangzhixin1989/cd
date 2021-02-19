@@ -1,0 +1,83 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: harbor-secret
+  namespace: ns-cicd
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyIxOTIuMTY4LjI2LjUwIjp7InVzZXJuYW1lIjoiYWRtaW4iLCJwYXNzd29yZCI6InJvb3QiLCJhdXRoIjoiWVdSdGFXNDZjbTl2ZEE9PSJ9fX0=
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: l3-deployment
+  namespace: ns-cicd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cd-l3
+  template:
+    metadata:
+      labels:
+        app: cd-l3
+      annotations:
+        cni.projectcalico.org/ipAddrs: "[\"169.250.1.30\"]"
+    spec:
+      imagePullSecrets:
+      - name: harbor-secret
+      containers:
+      - name: cd-l3
+        image: 192.168.26.50/cicd/l3:00.00001
+        imagePullPolicy: Always
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "cd /msyssrv/lm/ap/bin/; LD_LIBRARY_PATH=../lib ./gnb_cu_oam ../cfg/Proprietary_gNodeB_CU_Data_Model.xml ../cfg/TR196_gNodeB_CU_Data_Model.xml" ]
+        securityContext:
+          privileged: true
+        env:
+
+        volumeMounts:
+          - name: log-path
+            mountPath: /msyssrv/log/ap
+      volumes:
+        - name: log-path
+          hostPath:
+            path: /cicd/Log/cicd-deployment/msyssrv/log/ap
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: adpt-deployment
+  namespace: ns-cicd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cd-adpt
+  template:
+    metadata:
+      labels:
+        app: cd-adpt
+      annotations:
+        cni.projectcalico.org/ipAddrs: "[\"169.250.1.11\"]"
+    spec:
+      imagePullSecrets:
+      - name: harbor-secret
+      containers:
+      - name: cd-adpt
+        image: 192.168.26.50/cicd/adpt:00.00001
+        imagePullPolicy: Always
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "while true; do sleep 30; done;" ]
+        securityContext:
+          privileged: true
+        env:
+
+        volumeMounts:
+          - name: log-path
+            mountPath: /var/log
+      volumes:
+        - name: log-path
+          hostPath:
+            path: /cicd/Log/cicd-deployment

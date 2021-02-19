@@ -711,7 +711,7 @@ spec:
       - name: harbor-secret
       containers:
       - name: cd-adpt
-        image: 192.168.26.50/cicd/adpt:00.00001
+        image: 192.168.26.50/cicd/adpt:00.00002
         imagePullPolicy: Always
         command: [ "/bin/bash", "-c", "--" ]
         args: [ "cd /usr/local/container/; ./IT2_l5g_cucp_startup.sh" ]
